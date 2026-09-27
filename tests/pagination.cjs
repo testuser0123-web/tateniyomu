@@ -8,6 +8,14 @@ const measure={style:{},textContent:'',get scrollWidth(){return Array.from(this.
 const context=vm.createContext({Intl,setTimeout,$:()=>measure,revision:1});
 vm.runInContext(script.slice(script.indexOf('function boundaries'),script.indexOf('async function paginate')),context);
 vm.runInContext(script.slice(script.indexOf('function findPage'),script.indexOf('function fillPage')),context);
+vm.runInContext(script.slice(script.indexOf('function classifyGesture'),script.indexOf("const workspace=document.querySelector",script.indexOf('function classifyGesture'))),context);
+assert.equal(context.classifyGesture(100,4,200,'touch'),'next');
+assert.equal(context.classifyGesture(-100,4,200,'touch'),'previous');
+assert.equal(context.classifyGesture(3,2,100,'touch'),'tap');
+assert.equal(context.classifyGesture(2,2,750,'touch'),'none');
+assert.equal(context.classifyGesture(100,4,200,'mouse'),'none');
+assert.equal(context.classifyGesture(4,100,200,'touch'),'none');
+console.log('Swipe, tap, long-press, and selection-drag gesture checks passed.');
 context.FORMATS={bunko:{},shinsho:{},novel:{}};
 vm.runInContext(script.slice(script.indexOf('function validateImport'),script.indexOf("$('export-book').onclick")),context);
 const exported={format:'tateniyomu',version:1,book:{title:'移行テスト',text:'「本文」\n――栞',position:2,bookmarks:[{offset:2}],highlights:[{start:1,end:3}]},settings:{font:'gothic',size:22,format:'shinsho',theme:'dark'}};
