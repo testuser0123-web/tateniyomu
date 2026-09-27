@@ -1,0 +1,9 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8'),s=html.match(/<script>\n([\s\S]*?)<\/script>/)[1];new vm.Script(s);
+const ctx=vm.createContext({FORMATS:{bunko:{},shinsho:{},novel:{}}});
+for(const [a,b] of [['function makeExportData','function selectedExport'],['function validateImport',"$('export-book').onclick"],['function cleanCover','function paintCover']])vm.runInContext(s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a))),ctx);
+const book={title:'本',text:'0123456789',cover:{background:'#123456',color:'#ffffff',direction:'horizontal',image:''},bookmarks:[{offset:3}],highlights:[{start:2,end:5}]};
+const settings={font:'gothic',size:24,format:'shinsho',theme:'dark',animation:false};
+for(let mask=0;mask<16;mask++){const opts={notes:!!(mask&1),position:!!(mask&2),layout:!!(mask&4),preferences:!!(mask&8)};const data=ctx.makeExportData(book,settings,7,opts);const result=ctx.validateImport(JSON.parse(JSON.stringify(data)));assert.equal(result.book.text,book.text);assert.equal(result.book.cover.background,'#123456');assert.equal('bookmarks' in result.book,opts.notes);assert.equal('highlights' in result.book,opts.notes);assert.equal('position' in result.book,opts.position);assert.equal('font' in result.settings,opts.layout);assert.equal('theme' in result.settings,opts.preferences);assert.equal('animation' in result.settings,opts.preferences);const merged={theme:'light',size:18,...result.settings};assert.equal(merged.theme,opts.preferences?'dark':'light');assert.equal(merged.size,opts.layout?24:18);}
+assert.ok(s.includes("['saved-books','page','notes','cover-preview','delete-book-title','file-status']"));
+console.log('All 16 export combinations round-trip; omitted preferences remain unchanged on import.');
