@@ -1,0 +1,11 @@
+const fs=require('node:fs');
+const vm=require('node:vm');
+const assert=require('node:assert/strict');
+const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
+const script=html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
+new vm.Script(script);
+const measure={style:{},textContent:'',get scrollWidth(){return Array.from(this.textContent).length>80?102:100;},get scrollHeight(){return 100;}};
+const context=vm.createContext({Intl,setTimeout,$:()=>measure,revision:1});
+vm.runInContext(script.slice(script.indexOf('function boundaries'),script.indexOf('async function paginate')),context);
+vm.runInContext(script.slice(script.indexOf('function findPage'),script.indexOf('function fillPage')),context);
+(async()=>{const provided=process.argv[2]?fs.readFileSync(process.argv[2],'utf8').replace(/\r\n?/g,'\n'):'';const cases=['', 'あ'.repeat(79)+'」い。\n「次の文」', '空\n\n\n\n行', '👨‍👩‍👧‍👦か\u3099𠮷'.repeat(120), provided].filter((x,i)=>i<4||x);for(const text of cases){const pages=await context.splitPages(text,100,100,18,1);assert.equal(pages.map(p=>text.slice(p.start,p.end)).join(''),text);let end=0;const edges=new Set(context.boundaries(text));for(const page of pages){assert.equal(page.start,end);assert.ok(edges.has(page.start)&&edges.has(page.end));end=page.end;}context.pages=pages;for(let i=0;i<pages.length;i++)assert.equal(context.findPage(pages[i].start),i);console.log(`${text.length} UTF-16 units: ${pages.length} pages; no loss, duplication, or broken grapheme`);}console.log('Syntax and pagination checks passed. This test does not substitute for real browser layout QA.');})().catch(e=>{console.error(e);process.exit(1);});
