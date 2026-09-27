@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
+const script=html.match(/<script>\n([\s\S]*?)<\/script>/)[1];new vm.Script(script);
+const context=vm.createContext({FORMATS:{bunko:{},shinsho:{},novel:{}}});
+vm.runInContext(script.slice(script.indexOf('function cleanCover'),script.indexOf('function paintCover')),context);
+vm.runInContext(script.slice(script.indexOf('function validateImport'),script.indexOf("$('export-book').onclick")),context);
+const cover={background:'#123456',color:'#abcdef',direction:'horizontal',image:'data:image/png;base64,aGVsbG8='};
+const data={format:'tateniyomu',version:1,book:{title:'表紙テスト',text:'本文です',position:2,bookmarks:[{offset:1}],highlights:[{start:1,end:3}],cover},settings:{}};
+const actual=context.validateImport(JSON.parse(JSON.stringify(data))).book;
+assert.equal(JSON.stringify(actual.cover),JSON.stringify(cover));assert.equal(actual.position,2);assert.equal(actual.highlights[0].end,3);
+assert.equal(context.cleanCover({image:'https://example.com/a.png'}).image,'');assert.equal(context.cleanCover({image:'data:image/svg+xml;base64,abcd'}).image,'');assert.equal(context.cleanCover({background:'red'}).background,'#294a61');
+delete data.book.cover;assert.equal(context.validateImport(data).book.cover,undefined);
+assert.ok(script.includes("localStorage.removeItem(editingKey+':draft')"));assert.ok(script.includes("!readStore('tateniyomu:initialized')?SAMPLE:null"));
+console.log('Cover settings round-trip, image validation and old-format compatibility passed.');
