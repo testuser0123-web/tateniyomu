@@ -8,4 +8,12 @@ const measure={style:{},textContent:'',get scrollWidth(){return Array.from(this.
 const context=vm.createContext({Intl,setTimeout,$:()=>measure,revision:1});
 vm.runInContext(script.slice(script.indexOf('function boundaries'),script.indexOf('async function paginate')),context);
 vm.runInContext(script.slice(script.indexOf('function findPage'),script.indexOf('function fillPage')),context);
+context.FORMATS={bunko:{},shinsho:{},novel:{}};
+vm.runInContext(script.slice(script.indexOf('function validateImport'),script.indexOf("$('export-book').onclick")),context);
+const exported={format:'tateniyomu',version:1,book:{title:'移行テスト',text:'「本文」\n――栞',position:2,bookmarks:[{offset:2}],highlights:[{start:1,end:3}]},settings:{font:'gothic',size:22,format:'shinsho',theme:'dark'}};
+const imported=context.validateImport(JSON.parse(JSON.stringify(exported)));
+assert.equal(JSON.stringify(imported.book),JSON.stringify(exported.book));
+assert.equal(JSON.stringify(imported.settings),JSON.stringify(exported.settings));
+for(const invalid of [{...exported,version:2},{...exported,book:{...exported.book,position:-1}},{...exported,book:{...exported.book,highlights:[{start:1,end:9999}]}}])assert.throws(()=>context.validateImport(invalid));
+console.log('Book import round-trip and invalid-data rejection passed.');
 (async()=>{const provided=process.argv[2]?fs.readFileSync(process.argv[2],'utf8').replace(/\r\n?/g,'\n'):'';const cases=['', 'あ'.repeat(79)+'」い。\n「次の文」', '空\n\n\n\n行', '👨‍👩‍👧‍👦か\u3099𠮷'.repeat(120), provided].filter((x,i)=>i<4||x);for(const text of cases){const pages=await context.splitPages(text,100,100,18,1);assert.equal(pages.map(p=>text.slice(p.start,p.end)).join(''),text);let end=0;const edges=new Set(context.boundaries(text));for(const page of pages){assert.equal(page.start,end);assert.ok(edges.has(page.start)&&edges.has(page.end));end=page.end;}context.pages=pages;for(let i=0;i<pages.length;i++)assert.equal(context.findPage(pages[i].start),i);console.log(`${text.length} UTF-16 units: ${pages.length} pages; no loss, duplication, or broken grapheme`);}console.log('Syntax and pagination checks passed. This test does not substitute for real browser layout QA.');})().catch(e=>{console.error(e);process.exit(1);});
