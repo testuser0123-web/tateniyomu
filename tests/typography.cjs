@@ -8,3 +8,7 @@ assert.equal(runs.find(r=>r.text==='12').kind,'tcy');assert.equal(runs.find(r=>r
 assert.ok(!ctx.boundaries('あ12い').includes(2));
 const el=node();ctx.appendTypeset(el,text,0,[{start:2,end:18}]);assert.equal(el.textContent,text);assert.equal(marked(el),text.slice(2,18));
 console.log('Vertical typography preserves source text, selection offsets and highlighted numeric/symbol runs.');
+
+const rules=ctx.typesetRuns('前――後');assert.equal(rules.filter(r=>r.kind==='vertical-rule').length,1);assert.equal(rules.find(r=>r.kind==='vertical-rule').text,'――');
+const ruleNode=node();ctx.appendTypeset(ruleNode,'――',0,[{start:1,end:2}]);assert.equal(ruleNode.children.length,1);assert.equal(ruleNode.children[0].style.height,'2.11em');assert.equal(ruleNode.textContent,'――');assert.equal(marked(ruleNode),'―');
+console.log('Consecutive rules use one continuous drawing box and retain partial highlight offsets.');
