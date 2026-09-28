@@ -6,7 +6,7 @@ const script=html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
 new vm.Script(script);
 const {node,document}=require('./text-dom.cjs');const measure=node();Object.defineProperties(measure,{scrollWidth:{get(){return Array.from(this.textContent).length>80?102:100;}},scrollHeight:{get(){return 100;}}});
 const context=vm.createContext({Intl,setTimeout,document,$:()=>measure,revision:1});
-vm.runInContext(script.slice(script.indexOf('function typesetRuns'),script.indexOf('async function paginate')),context);
+vm.runInContext(script.slice(script.indexOf('function sidewaysRanges'),script.indexOf('async function paginate')),context);
 vm.runInContext(script.slice(script.indexOf('function findPage'),script.indexOf('function fillPage')),context);
 vm.runInContext(script.slice(script.indexOf('function classifyGesture'),script.indexOf("const workspace=document.querySelector",script.indexOf('function classifyGesture'))),context);
 assert.equal(context.classifyGesture(100,4,200,'touch'),'next');
