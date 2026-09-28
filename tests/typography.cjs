@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
 const {node,document,marked}=require('./text-dom.cjs');
 const s=fs.readFileSync(__dirname+'/../dist/index.html','utf8').match(/<script>\n([\s\S]*?)<\/script>/)[1];
-const ctx=vm.createContext({document,Intl});vm.runInContext(s.slice(s.indexOf('function typesetRuns'),s.indexOf('// Measure actual')),ctx);
+const ctx=vm.createContext({document,Intl});vm.runInContext(s.slice(s.indexOf('function sidewaysRanges'),s.indexOf('// Measure actual')),ctx);
 const text='「……」――── 12月3日 2026年 Bloom Garden party A組 ... --';
 const runs=ctx.typesetRuns(text);assert.equal(runs.map(r=>r.text).join(''),text);
 assert.equal(runs.find(r=>r.text==='12').kind,'tcy');
@@ -17,3 +17,21 @@ console.log('Vertical typography preserves source text, selection offsets and hi
 const rules=ctx.typesetRuns('前――後');assert.equal(rules.filter(r=>r.kind==='vertical-rule').length,1);assert.equal(rules.find(r=>r.kind==='vertical-rule').text,'――');
 const ruleNode=node();ctx.appendTypeset(ruleNode,'――',0,[{start:1,end:2}]);assert.equal(ruleNode.children.length,1);assert.equal(ruleNode.children[0].style.height,'2.11em');assert.equal(ruleNode.textContent,'――');assert.equal(marked(ruleNode),'―');
 console.log('Consecutive rules use one continuous drawing box and retain partial highlight offsets.');
+
+const marker='￢⊥',wrapped='前￢⊥安倍晋三￢⊥後',wrappedRuns=ctx.typesetRuns(wrapped);
+const html=fs.readFileSync(__dirname+'/../dist/index.html','utf8');
+assert.match(html,/\.page-text \.sideways-text\{text-orientation:sideways;-webkit-text-orientation:sideways/);
+assert.match(html,/\.page-text \.writing-marker\{display:none!important\}/);
+assert.equal(wrappedRuns.map(r=>r.text).join(''),wrapped);
+assert.equal(wrappedRuns.filter(r=>r.kind==='writing-marker').map(r=>r.text).join(''),marker+marker);
+assert.equal(wrappedRuns.find(r=>r.kind==='sideways-text').text,'安倍晋三');
+const wrappedBoundaries=ctx.boundaries(wrapped),openAt=wrapped.indexOf(marker),closeAt=wrapped.lastIndexOf(marker);
+assert.ok(!wrappedBoundaries.includes(openAt+1));assert.ok(!wrappedBoundaries.includes(closeAt+1));
+assert.ok(wrappedBoundaries.includes(openAt+marker.length+1),'The sideways text can still wrap across pages.');
+const wrappedEl=node();ctx.appendTypeset(wrappedEl,wrapped,0,[{start:3,end:7}]);
+assert.equal(wrappedEl.textContent,wrapped);assert.equal(marked(wrappedEl),'安倍晋三');
+assert.ok(wrappedEl.children.some(child=>child.className==='sideways-text'));
+assert.equal(wrappedEl.children.filter(child=>child.className==='writing-marker').length,2);
+const partial=wrapped.slice(3,5),partialEl=node();ctx.appendTypeset(partialEl,partial,3,[],wrapped);
+assert.equal(partialEl.textContent,partial);assert.equal(partialEl.children[0].className,'sideways-text');
+console.log('￢⊥ markers hide their delimiters, rotate enclosed Japanese text, and preserve pagination and highlight offsets.');
