@@ -4,7 +4,7 @@ const {node,document,marked}=require('./text-dom.cjs');
 const book={text:'あいうえお「かきくけこ」さしすせそ。たちつてと\nなにぬねの'.repeat(5),bookmarks:[{offset:14},{offset:81}],highlights:[{start:8,end:48}]};
 const original=JSON.stringify(book);
 const context=vm.createContext({book,document,pages:[],current:0});
-vm.runInContext(script.slice(script.indexOf('function typesetRuns'),script.indexOf('function boundaries')),context);
+vm.runInContext(script.slice(script.indexOf('function sidewaysRanges'),script.indexOf('function boundaries')),context);
 vm.runInContext(script.slice(script.indexOf('function findPage'),script.indexOf('function render()')),context);
 for(const capacity of [12,25,70]){
  context.pages=Array.from({length:Math.ceil(book.text.length/capacity)},(_,i)=>({start:i*capacity,end:Math.min(book.text.length,(i+1)*capacity)}));
