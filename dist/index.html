@@ -57,6 +57,8 @@ body.paper-mode .stage .book,body.paper-mode.focus-mode .stage .book{padding:48p
 body.paper-mode .stage .running-title{top:20px;left:36px;right:64px}body.paper-mode .stage .page-bookmark{top:8px;right:10px}body.paper-mode .stage .folio{bottom:12px}
 body.paper-mode.focus-mode .stage .folio{bottom:12px}body.paper-mode .book:before,body.paper-mode.focus-mode .book:before{display:block;opacity:1}
 body:not(.paper-mode) #spread-setting{display:none}
+/* Immersive mode on pointer devices: faint edge buttons for turning pages without keys, wheel or touch. */
+@media(hover:hover){.focus-mode .stage .turn{display:block;visibility:visible;pointer-events:auto;width:44px;height:96px;padding:0;border:0;background:transparent;color:var(--muted);font-size:26px;opacity:.28;transition:opacity .15s,background .15s}.focus-mode .stage .turn:hover,.focus-mode .stage .turn:focus-visible{opacity:.85;background:#0000000a}body[data-theme=dark].focus-mode .stage .turn:hover{background:#ffffff12}.focus-mode .stage .turn:disabled{opacity:0;pointer-events:none}.focus-mode .stage #next{left:2px}.focus-mode .stage #previous{right:2px}}
 </style>
 </head>
 <body class="focus-mode library-view">
