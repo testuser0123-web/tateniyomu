@@ -75,9 +75,9 @@ console.log('Long ruby overhangs adjacent kana only.');
 assert.match(html,/<form id="edit-form">[\s\S]*?<button type="button" id="markup-link" class="link-button">原文のマークダウン記法<\/button>[\s\S]*?<\/form><\/dialog><dialog id="markup-dialog"/);
 assert.doesNotMatch(html,/shelf-footer|markup-view/);
 const samples=[...html.matchAll(/data-sample="([^"]*)"/g)].map(m=>m[1].replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
-assert.equal(samples.length,3);
+assert.equal(samples.length,5);
 for(const sample of samples){const sampleEl=node();ctx.appendTypeset(sampleEl,sample);assert.equal(sampleEl.textContent,sample);}
-assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));assert.ok(ctx.typesetRuns(samples[2]).some(r=>r.kind==='upright-text'));
+assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));assert.ok(ctx.typesetRuns(samples[2]).some(r=>r.kind==='upright-text'));assert.ok(ctx.typesetRuns(samples[3]).some(r=>r.deco==='md-bold'));assert.ok(ctx.typesetRuns(samples[4]).some(r=>r.deco==='md-strike'));
 console.log('The source editor links to the markup guide, and its examples use the real syntax.');
 
 assert.match(html,/\.page-text \.upright-text\{text-orientation:upright;-webkit-text-orientation:upright/);
@@ -93,3 +93,19 @@ const kind=t=>ctx.typesetRuns(t).filter(r=>r.kind==='upright-text'||r.kind==='si
 assert.equal(kind('￢⊥横￢⊥⊥⊥NHK⊥⊥'),'sideways-text:横|upright-text:NHK');
 assert.equal(kind('⊥⊥⊥⊥ ⊥⊥改\n行⊥⊥ ⊥⊥閉じない'),'');
 console.log('⊥⊥ markers keep abbreviations upright on one line and coexist with ￢⊥.');
+
+assert.match(html,/\.page-text \.md-bold\{font-weight:700\}\.page-text \.md-strike\{text-decoration:line-through/);
+const decoText=t=>ctx.typesetRuns(t).filter(r=>r.deco).map(r=>r.deco+':'+r.text).join('|');
+const bs='それは**とても大切な**約束で~~嘘~~本当だ。';
+assert.equal(ctx.typesetRuns(bs).map(r=>r.text).join(''),bs);
+assert.equal(ctx.typesetRuns(bs).filter(r=>r.kind==='writing-marker').map(r=>r.text).join('|'),'**|**|~~|~~');
+assert.equal(decoText(bs),'md-bold:とても大切な|md-strike:嘘');
+assert.equal(decoText('**12月の[[約束]]<<やくそく>>**'),'md-bold:12|md-bold:月の|md-bold:約束|md-bold:やくそく');
+assert.equal(decoText('**太~~両方~~太**'),'md-bold:太|md-bold md-strike:両方|md-bold:太');
+assert.equal(decoText('彼は~~嘘~~本当と~~……~~と**~~両方~~**。'),'md-strike:嘘|md-strike:…|md-strike:…|md-bold md-strike:両方');
+assert.equal(decoText('**改\n行** ** ** ****  ~~〜~~ 〜〜x〜〜 ～～y～～ [[a**b]]<<c**>>'),'md-strike:〜');
+const bsEl=node();ctx.appendTypeset(bsEl,bs,0,[{start:6,end:10}]);assert.equal(bsEl.textContent,bs);assert.equal(marked(bsEl),'ても大切');
+assert.ok(bsEl.children.some(c=>c.className==='md-bold'));assert.ok(bsEl.children.some(c=>c.className==='md-strike'&&c.textContent==='嘘'));
+const tcyBold=node();ctx.appendTypeset(tcyBold,'**12**');assert.ok(tcyBold.children.some(c=>c.className==='tcy md-bold'));
+const glued=node();ctx.appendTypeset(glued,'て**……**」と');assert.equal(glued.children.filter(c=>c.className==='nobreak').map(c=>c.textContent).join('|'),'……**」');
+console.log('** and ~~ add bold and strikethrough, wrap other markup, and keep kinsoku across hidden markers.');
