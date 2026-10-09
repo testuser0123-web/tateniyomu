@@ -119,6 +119,6 @@ console.log('In list view, the whole row except its buttons opens the book.');
 assert.match(html,/<button type="button" id="shelf-settings" class="icon-button" aria-label="ホームの設定"/);
 assert.match(html,/function applyTheme\(\)\{const theme=document\.body\.classList\.contains\('library-view'\)\?homeTheme\(\):settings\.theme==='dark'\?'dark':'light';/);
 console.log('Home has its own theme setting behind a gear button, independent of the reading theme.');
-assert.match(html,/<button id="shelf-new" class="primary" title="新しい本をつくる">＋ 新規<\/button>/);assert.doesNotMatch(html,/＋ 本をつくる/);
+assert.match(html,/<button id="shelf-new" class="primary">＋ 新規<\/button>/);assert.doesNotMatch(html,/＋ 本をつくる/);
 assert.match(html,/\.shelf-header\{padding:14px 16px;flex-wrap:nowrap;gap:10px\}\.shelf-brand\{white-space:nowrap;flex:none\}/);
 console.log('The library header keeps the logo and buttons on one row on phones.');
