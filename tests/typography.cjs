@@ -71,3 +71,10 @@ assert.equal(overRuby.style.marginInlineStart,'-0.473em');assert.equal(overRuby.
 const kanji=node();ctx.appendTypeset(kanji,'東[[私]]<<わたくし>>。');assert.equal(rubyOf(kanji)[0].style.marginInlineStart,undefined);assert.equal(rubyOf(kanji)[0].style.marginInlineEnd,undefined);
 const short=node();ctx.appendTypeset(short,'の[[欲望]]<<よくぼう>>の');assert.equal(rubyOf(short)[0].style.marginInlineStart,undefined);
 console.log('Long ruby overhangs adjacent kana only.');
+
+assert.match(html,/<footer class="shelf-footer"><a href="#markup" id="markup-link">原文のマークダウン記法<\/a><\/footer>/);
+const samples=[...html.matchAll(/data-sample="([^"]*)"/g)].map(m=>m[1].replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
+assert.equal(samples.length,2);
+for(const sample of samples){const sampleEl=node();ctx.appendTypeset(sampleEl,sample);assert.equal(sampleEl.textContent,sample);}
+assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));
+console.log('The library footer links to the markup guide, and its examples use the real syntax.');
