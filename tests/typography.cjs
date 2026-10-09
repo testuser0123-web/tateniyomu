@@ -81,15 +81,15 @@ assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(c
 console.log('The source editor links to the markup guide, and its examples use the real syntax.');
 
 assert.match(html,/\.page-text \.upright-text\{text-orientation:upright;-webkit-text-orientation:upright/);
-const upSource='株価は⊥⊥AMD⊥⊥と⊥⊥IONQ⊥⊥。',upRuns=ctx.typesetRuns(upSource);
+const upSource='発表は⊥⊥WHO⊥⊥と⊥⊥UNICEF⊥⊥。',upRuns=ctx.typesetRuns(upSource);
 assert.equal(upRuns.map(r=>r.text).join(''),upSource);
-assert.equal(upRuns.filter(r=>r.kind==='upright-text').map(r=>r.text).join('|'),'AMD|IONQ');
+assert.equal(upRuns.filter(r=>r.kind==='upright-text').map(r=>r.text).join('|'),'WHO|UNICEF');
 assert.equal(upRuns.filter(r=>r.kind==='writing-marker').length,4);assert.ok(!upRuns.some(r=>r.kind==='latin-words'));
 const upEdges=ctx.boundaries(upSource),upStart=upSource.indexOf('⊥⊥'),upEnd=upSource.indexOf('⊥⊥',upStart+2)+2;
 assert.ok(upEdges.every(i=>i<=upStart||i>=upEnd),'Upright text stays on one page.');
-const upEl=node();ctx.appendTypeset(upEl,upSource,0,[{start:6,end:8}]);assert.equal(upEl.textContent,upSource);assert.equal(marked(upEl),'MD');
-assert.equal(upEl.children.filter(c=>c.className==='nobreak').map(c=>c.textContent).join('|'),'⊥⊥AMD⊥⊥|⊥⊥IONQ⊥⊥。');
+const upEl=node();ctx.appendTypeset(upEl,upSource,0,[{start:6,end:8}]);assert.equal(upEl.textContent,upSource);assert.equal(marked(upEl),'HO');
+assert.equal(upEl.children.filter(c=>c.className==='nobreak').map(c=>c.textContent).join('|'),'⊥⊥WHO⊥⊥|⊥⊥UNICEF⊥⊥。');
 const kind=t=>ctx.typesetRuns(t).filter(r=>r.kind==='upright-text'||r.kind==='sideways-text').map(r=>r.kind+':'+r.text).join('|');
-assert.equal(kind('￢⊥横￢⊥⊥⊥AMD⊥⊥'),'sideways-text:横|upright-text:AMD');
+assert.equal(kind('￢⊥横￢⊥⊥⊥NHK⊥⊥'),'sideways-text:横|upright-text:NHK');
 assert.equal(kind('⊥⊥⊥⊥ ⊥⊥改\n行⊥⊥ ⊥⊥閉じない'),'');
 console.log('⊥⊥ markers keep abbreviations upright on one line and coexist with ￢⊥.');
