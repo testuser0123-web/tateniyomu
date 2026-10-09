@@ -72,9 +72,10 @@ const kanji=node();ctx.appendTypeset(kanji,'東[[私]]<<わたくし>>。');asse
 const short=node();ctx.appendTypeset(short,'の[[欲望]]<<よくぼう>>の');assert.equal(rubyOf(short)[0].style.marginInlineStart,undefined);
 console.log('Long ruby overhangs adjacent kana only.');
 
-assert.match(html,/<footer class="shelf-footer"><a href="#markup" id="markup-link">原文のマークダウン記法<\/a><\/footer>/);
+assert.match(html,/<form id="edit-form">[\s\S]*?<button type="button" id="markup-link" class="link-button">原文のマークダウン記法<\/button>[\s\S]*?<\/form><\/dialog><dialog id="markup-dialog"/);
+assert.doesNotMatch(html,/shelf-footer|markup-view/);
 const samples=[...html.matchAll(/data-sample="([^"]*)"/g)].map(m=>m[1].replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
 assert.equal(samples.length,2);
 for(const sample of samples){const sampleEl=node();ctx.appendTypeset(sampleEl,sample);assert.equal(sampleEl.textContent,sample);}
 assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));
-console.log('The library footer links to the markup guide, and its examples use the real syntax.');
+console.log('The source editor links to the markup guide, and its examples use the real syntax.');
