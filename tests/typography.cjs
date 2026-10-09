@@ -109,3 +109,8 @@ assert.ok(bsEl.children.some(c=>c.className==='md-bold'));assert.ok(bsEl.childre
 const tcyBold=node();ctx.appendTypeset(tcyBold,'**12**');assert.ok(tcyBold.children.some(c=>c.className==='tcy md-bold'));
 const glued=node();ctx.appendTypeset(glued,'て**……**」と');assert.equal(glued.children.filter(c=>c.className==='nobreak').map(c=>c.textContent).join('|'),'……**」');
 console.log('** and ~~ add bold and strikethrough, wrap other markup, and keep kinsoku across hidden markers.');
+
+assert.match(html,/<div class="view-toggle" role="group" aria-label="本棚の表示"><button type="button" id="view-grid" data-view="grid"[^>]*aria-label="グリッド表示"[\s\S]*?id="view-list" data-view="list"[^>]*aria-label="リスト表示"/);
+assert.match(html,/@media\(max-width:680px\)\{\.shelf-grid\.view-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+assert.match(html,/function shelfView\(\)\{return settings\.shelfView==='list'\?'list':'grid';\}/);
+console.log('The library offers a remembered grid/list toggle with three covers per row on phones.');
