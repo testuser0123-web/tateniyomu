@@ -114,3 +114,5 @@ assert.match(html,/<div class="view-toggle" role="group" aria-label="本棚の�
 assert.match(html,/@media\(max-width:680px\)\{\.shelf-grid\.view-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 assert.match(html,/function shelfView\(\)\{return settings\.shelfView==='list'\?'list':'grid';\}/);
 console.log('The library offers a remembered grid/list toggle with three covers per row on phones.');
+assert.match(html,/card\.onclick=e=>\{if\(shelfView\(\)==='list'&&!e\.target\.closest\('button'\)\)open\(\);\};/);
+console.log('In list view, the whole row except its buttons opens the book.');
