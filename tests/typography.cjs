@@ -75,7 +75,21 @@ console.log('Long ruby overhangs adjacent kana only.');
 assert.match(html,/<form id="edit-form">[\s\S]*?<button type="button" id="markup-link" class="link-button">原文のマークダウン記法<\/button>[\s\S]*?<\/form><\/dialog><dialog id="markup-dialog"/);
 assert.doesNotMatch(html,/shelf-footer|markup-view/);
 const samples=[...html.matchAll(/data-sample="([^"]*)"/g)].map(m=>m[1].replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
-assert.equal(samples.length,2);
+assert.equal(samples.length,3);
 for(const sample of samples){const sampleEl=node();ctx.appendTypeset(sampleEl,sample);assert.equal(sampleEl.textContent,sample);}
-assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));
+assert.ok(ctx.typesetRuns(samples[0]).some(r=>r.kind==='ruby-text'));assert.ok(ctx.typesetRuns(samples[1]).some(r=>r.kind==='sideways-text'));assert.ok(ctx.typesetRuns(samples[2]).some(r=>r.kind==='upright-text'));
 console.log('The source editor links to the markup guide, and its examples use the real syntax.');
+
+assert.match(html,/\.page-text \.upright-text\{text-orientation:upright;-webkit-text-orientation:upright/);
+const upSource='発表は⊥⊥WHO⊥⊥と⊥⊥UNICEF⊥⊥。',upRuns=ctx.typesetRuns(upSource);
+assert.equal(upRuns.map(r=>r.text).join(''),upSource);
+assert.equal(upRuns.filter(r=>r.kind==='upright-text').map(r=>r.text).join('|'),'WHO|UNICEF');
+assert.equal(upRuns.filter(r=>r.kind==='writing-marker').length,4);assert.ok(!upRuns.some(r=>r.kind==='latin-words'));
+const upEdges=ctx.boundaries(upSource),upStart=upSource.indexOf('⊥⊥'),upEnd=upSource.indexOf('⊥⊥',upStart+2)+2;
+assert.ok(upEdges.every(i=>i<=upStart||i>=upEnd),'Upright text stays on one page.');
+const upEl=node();ctx.appendTypeset(upEl,upSource,0,[{start:6,end:8}]);assert.equal(upEl.textContent,upSource);assert.equal(marked(upEl),'HO');
+assert.equal(upEl.children.filter(c=>c.className==='nobreak').map(c=>c.textContent).join('|'),'⊥⊥WHO⊥⊥|⊥⊥UNICEF⊥⊥。');
+const kind=t=>ctx.typesetRuns(t).filter(r=>r.kind==='upright-text'||r.kind==='sideways-text').map(r=>r.kind+':'+r.text).join('|');
+assert.equal(kind('￢⊥横￢⊥⊥⊥NHK⊥⊥'),'sideways-text:横|upright-text:NHK');
+assert.equal(kind('⊥⊥⊥⊥ ⊥⊥改\n行⊥⊥ ⊥⊥閉じない'),'');
+console.log('⊥⊥ markers keep abbreviations upright on one line and coexist with ￢⊥.');
