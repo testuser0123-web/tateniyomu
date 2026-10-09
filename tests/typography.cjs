@@ -37,7 +37,7 @@ assert.equal(partialEl.textContent,partial);assert.equal(partialEl.children[0].c
 console.log('￢⊥ markers hide their delimiters, rotate enclosed Japanese text, and preserve pagination and highlight offsets.');
 
 const rubySource='前[[漢字]]<<かんじ>>後と[[12月]]<<じゅうにがつ>>',rubyRuns=ctx.typesetRuns(rubySource);
-assert.match(html,/\.page-text ruby\{ruby-position:over/);
+assert.match(html,/\.page-text ruby\{ruby-position:over;ruby-align:space-around\}/);
 assert.equal(rubyRuns.map(r=>r.text).join(''),rubySource);
 assert.equal(rubyRuns.filter(r=>r.kind==='writing-marker').map(r=>r.text).join('|'),'[[|]]<<|>>|[[|]]<<|>>');
 assert.equal(rubyRuns.filter(r=>r.kind==='ruby-text').map(r=>r.text).join('|'),'かんじ|じゅうにがつ');
@@ -47,10 +47,27 @@ assert.ok(rubyBoundaries.includes(rubyStart)&&rubyBoundaries.includes(rubyEnd));
 assert.ok(rubyBoundaries.every(i=>i<=rubyStart||i>=rubyEnd),'Ruby is never split across pages.');
 const rubyEl=node();ctx.appendTypeset(rubyEl,rubySource,0,[{start:3,end:12}]);
 assert.equal(rubyEl.textContent,rubySource);assert.equal(marked(rubyEl),'漢字]]<<かんじ');
-const rubies=rubyEl.children.filter(child=>child.tag==='ruby');assert.equal(rubies.length,2);
+const rubies=rubyEl.children.flatMap(child=>child.className==='nobreak'?child.children:[child]).filter(child=>child.tag==='ruby');assert.equal(rubies.length,2);
 assert.equal(rubies[0].children.find(child=>child.tag==='rt').textContent,'かんじ');
 assert.equal(rubies[0].textContent,'漢字]]<<かんじ');
 assert.equal(ctx.typesetRuns('[[改行\nは不可]]<<だめ>> [[空]]<<>>').filter(r=>r.kind==='ruby-text').length,0);
 const mixed=ctx.typesetRuns('￢⊥[[横]]<<よこ>>￢⊥ [[縦]]<<たて>>');
 assert.equal(mixed.find(r=>r.kind==='sideways-text').text,'[[横]]<<よこ>>');assert.equal(mixed.find(r=>r.kind==='ruby-text').text,'たて');
 console.log('[[漢字]]<<かんじ>> renders ruby, hides its delimiters, stays on one page, and preserves highlight offsets.');
+
+assert.match(html,/\.page-text \.nobreak\{white-space:nowrap\}/);
+const groupText=el=>el.children.filter(child=>child.className==='nobreak').map(child=>child.textContent);
+const kinsoku=node();ctx.appendTypeset(kinsoku,'「作って……」と12。「――」[[漢字]]<<かんじ>>」');
+assert.equal(kinsoku.textContent,'「作って……」と12。「――」[[漢字]]<<かんじ>>」');
+assert.equal(groupText(kinsoku).join('|'),'……」|12。|「――」|[[漢字]]<<かんじ>>」');
+const opening=node();ctx.appendTypeset(opening,'彼は「……と言った');assert.equal(groupText(opening).join('|'),'「……');
+const plain=node();ctx.appendTypeset(plain,'普通の文章です。');assert.equal(groupText(plain).length,0);
+const highlighted=node();ctx.appendTypeset(highlighted,'て……」と',0,[{start:2,end:4}]);assert.equal(marked(highlighted),'…」');
+console.log('Line-start/line-end forbidden characters stay attached to symbols, tate-chu-yoko and ruby.');
+
+const rubyOf=el=>{const all=[];const walk=n=>{if(n.tag==='ruby')all.push(n);(n.children||[]).forEach(walk);};walk(el);return all;};
+const over=node();ctx.appendTypeset(over,'と[[私]]<<わたくし>>と');const [overRuby]=rubyOf(over);
+assert.equal(overRuby.style.marginInlineStart,'-0.473em');assert.equal(overRuby.style.marginInlineEnd,'-0.473em');
+const kanji=node();ctx.appendTypeset(kanji,'東[[私]]<<わたくし>>。');assert.equal(rubyOf(kanji)[0].style.marginInlineStart,undefined);assert.equal(rubyOf(kanji)[0].style.marginInlineEnd,undefined);
+const short=node();ctx.appendTypeset(short,'の[[欲望]]<<よくぼう>>の');assert.equal(rubyOf(short)[0].style.marginInlineStart,undefined);
+console.log('Long ruby overhangs adjacent kana only.');
