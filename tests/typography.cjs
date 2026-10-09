@@ -35,3 +35,22 @@ assert.equal(wrappedEl.children.filter(child=>child.className==='writing-marker'
 const partial=wrapped.slice(3,5),partialEl=node();ctx.appendTypeset(partialEl,partial,3,[],wrapped);
 assert.equal(partialEl.textContent,partial);assert.equal(partialEl.children[0].className,'sideways-text');
 console.log('￢⊥ markers hide their delimiters, rotate enclosed Japanese text, and preserve pagination and highlight offsets.');
+
+const rubySource='前[[漢字]]<<かんじ>>後と[[12月]]<<じゅうにがつ>>',rubyRuns=ctx.typesetRuns(rubySource);
+assert.match(html,/\.page-text ruby\{ruby-position:over/);
+assert.equal(rubyRuns.map(r=>r.text).join(''),rubySource);
+assert.equal(rubyRuns.filter(r=>r.kind==='writing-marker').map(r=>r.text).join('|'),'[[|]]<<|>>|[[|]]<<|>>');
+assert.equal(rubyRuns.filter(r=>r.kind==='ruby-text').map(r=>r.text).join('|'),'かんじ|じゅうにがつ');
+assert.equal(rubyRuns.find(r=>r.text==='12').kind,'tcy');
+const rubyBoundaries=ctx.boundaries(rubySource),rubyStart=rubySource.indexOf('[['),rubyEnd=rubySource.indexOf('>>')+2;
+assert.ok(rubyBoundaries.includes(rubyStart)&&rubyBoundaries.includes(rubyEnd));
+assert.ok(rubyBoundaries.every(i=>i<=rubyStart||i>=rubyEnd),'Ruby is never split across pages.');
+const rubyEl=node();ctx.appendTypeset(rubyEl,rubySource,0,[{start:3,end:12}]);
+assert.equal(rubyEl.textContent,rubySource);assert.equal(marked(rubyEl),'漢字]]<<かんじ');
+const rubies=rubyEl.children.filter(child=>child.tag==='ruby');assert.equal(rubies.length,2);
+assert.equal(rubies[0].children.find(child=>child.tag==='rt').textContent,'かんじ');
+assert.equal(rubies[0].textContent,'漢字]]<<かんじ');
+assert.equal(ctx.typesetRuns('[[改行\nは不可]]<<だめ>> [[空]]<<>>').filter(r=>r.kind==='ruby-text').length,0);
+const mixed=ctx.typesetRuns('￢⊥[[横]]<<よこ>>￢⊥ [[縦]]<<たて>>');
+assert.equal(mixed.find(r=>r.kind==='sideways-text').text,'[[横]]<<よこ>>');assert.equal(mixed.find(r=>r.kind==='ruby-text').text,'たて');
+console.log('[[漢字]]<<かんじ>> renders ruby, hides its delimiters, stays on one page, and preserves highlight offsets.');
