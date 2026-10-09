@@ -111,8 +111,11 @@ const glued=node();ctx.appendTypeset(glued,'て**……**」と');assert.equal(g
 console.log('** and ~~ add bold and strikethrough, wrap other markup, and keep kinsoku across hidden markers.');
 
 assert.match(html,/<div class="view-toggle" role="group" aria-label="本棚の表示"><button type="button" id="view-grid" data-view="grid"[^>]*aria-label="グリッド表示"[\s\S]*?id="view-list" data-view="list"[^>]*aria-label="リスト表示"/);
-assert.match(html,/@media\(max-width:680px\)\{\.shelf-grid\.view-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+assert.match(html,/@media\(max-width:680px\)\{[^@]*\.shelf-grid\.view-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 assert.match(html,/function shelfView\(\)\{return settings\.shelfView==='list'\?'list':'grid';\}/);
 console.log('The library offers a remembered grid/list toggle with three covers per row on phones.');
 assert.match(html,/card\.onclick=e=>\{if\(shelfView\(\)==='list'&&!e\.target\.closest\('button'\)\)open\(\);\};/);
 console.log('In list view, the whole row except its buttons opens the book.');
+assert.match(html,/<button type="button" id="shelf-settings" class="icon-button" aria-label="ホームの設定"/);
+assert.match(html,/function applyTheme\(\)\{const theme=document\.body\.classList\.contains\('library-view'\)\?homeTheme\(\):settings\.theme==='dark'\?'dark':'light';/);
+console.log('Home has its own theme setting behind a gear button, independent of the reading theme.');
