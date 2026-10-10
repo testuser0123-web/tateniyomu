@@ -139,3 +139,9 @@ const dotText='はい.そうです... Mr. Smith',dotRuns=ctx.typesetRuns(dotText
 assert.equal(dotRuns.find(r=>r.text==='.').kind,'upright-punct');assert.equal(dotRuns.find(r=>r.text==='...').kind,'vertical-symbol');assert.equal(dotRuns.find(r=>r.text==='Mr. Smith').kind,'latin-words');
 const dotNode=node();ctx.appendTypeset(dotNode,'はい.そう');assert.equal(dotNode.textContent,'はい．そう');
 console.log('A half-width period in Japanese text uses the vertical full-width period; ... and English phrases are unchanged.');
+
+const colonText='時刻:12時;以上 秒-終 前--後 Note: e-mail, well-known',colonRuns=ctx.typesetRuns(colonText);assert.equal(colonRuns.map(r=>r.text).join(''),colonText);
+for(const c of [':',';','-'])assert.equal(colonRuns.find(r=>r.text===c).kind,'upright-punct');
+assert.equal(colonRuns.find(r=>r.text==='--').kind,'vertical-rule');assert.equal(colonRuns.find(r=>r.text==='Note: e-mail, well-known').kind,'latin-words');
+const colonNode=node();ctx.appendTypeset(colonNode,'時:分;秒-終');assert.equal(colonNode.textContent,'時：分；秒‐終');
+console.log('Half-width colon, semicolon and hyphen in Japanese text use vertical full-width forms; English phrases stay sideways.');
