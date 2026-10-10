@@ -123,9 +123,9 @@ assert.match(html,/<button id="shelf-new" class="primary">＋ 新規<\/button>/)
 assert.match(html,/\.shelf-header\{padding:14px 16px;flex-wrap:nowrap;gap:10px\}\.shelf-brand\{white-space:nowrap;flex:none\}/);
 console.log('The library header keeps the logo and buttons on one row on phones.');
 
-const bangText='Love it! 本当?! 嘘!!! え?',bangRuns=ctx.typesetRuns(bangText);assert.equal(bangRuns.map(r=>r.text).join(''),bangText);
-assert.equal(bangRuns.find(r=>r.text==='Love it').kind,'latin-words');assert.equal(bangRuns.find(r=>r.text==='!').kind,'upright-punct');
-assert.equal(bangRuns.find(r=>r.text==='?!').kind,'tcy');assert.equal(bangRuns.find(r=>r.text==='!!!').kind,'upright-punct');assert.equal(bangRuns.find(r=>r.text==='?').kind,'upright-punct');
+const bangText='『Love it! Wonderful Trip!』 本当?! 嘘!!! え!',bangRuns=ctx.typesetRuns(bangText);assert.equal(bangRuns.map(r=>r.text).join(''),bangText);
+assert.equal(bangRuns.find(r=>r.text==='Love it! Wonderful Trip!').kind,'latin-words','Marks attached to English stay sideways with it.');assert.equal(bangRuns.find(r=>r.text==='!').kind,'upright-punct');
+assert.equal(bangRuns.find(r=>r.text==='?!').kind,'tcy');assert.equal(bangRuns.find(r=>r.text==='!!!').kind,'upright-punct');
 assert.ok(!ctx.boundaries('本当?!').includes(3));
 const bangNode=node();ctx.appendTypeset(bangNode,'え!?お?');assert.equal(bangNode.textContent,'え!?お？');assert.ok(bangNode.children.some(c=>c.className==='tcy'&&c.textContent==='!?'));
 console.log('Half-width ! and ? stand upright; pairs such as !? are set tate-chu-yoko.');
