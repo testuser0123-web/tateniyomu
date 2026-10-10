@@ -134,3 +134,8 @@ const commaText='はい,そうです。Hello, world 1,000',commaRuns=ctx.typeset
 assert.equal(commaRuns.find(r=>r.text===',').kind,'upright-punct');assert.equal(commaRuns.find(r=>r.text==='Hello, world').kind,'latin-words');
 const commaNode=node();ctx.appendTypeset(commaNode,'はい,そう');assert.equal(commaNode.textContent,'はい，そう');
 console.log('A half-width comma in Japanese text uses the vertical full-width comma; inside an English phrase it stays sideways.');
+
+const dotText='はい.そうです... Mr. Smith',dotRuns=ctx.typesetRuns(dotText);assert.equal(dotRuns.map(r=>r.text).join(''),dotText);
+assert.equal(dotRuns.find(r=>r.text==='.').kind,'upright-punct');assert.equal(dotRuns.find(r=>r.text==='...').kind,'vertical-symbol');assert.equal(dotRuns.find(r=>r.text==='Mr. Smith').kind,'latin-words');
+const dotNode=node();ctx.appendTypeset(dotNode,'はい.そう');assert.equal(dotNode.textContent,'はい．そう');
+console.log('A half-width period in Japanese text uses the vertical full-width period; ... and English phrases are unchanged.');
