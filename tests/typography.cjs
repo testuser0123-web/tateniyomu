@@ -129,3 +129,8 @@ assert.equal(bangRuns.find(r=>r.text==='?!').kind,'tcy');assert.equal(bangRuns.f
 assert.ok(!ctx.boundaries('本当?!').includes(3));
 const bangNode=node();ctx.appendTypeset(bangNode,'え!?お?');assert.equal(bangNode.textContent,'え!?お？');assert.ok(bangNode.children.some(c=>c.className==='tcy'&&c.textContent==='!?'));
 console.log('Half-width ! and ? stand upright; pairs such as !? are set tate-chu-yoko.');
+
+const commaText='はい,そうです。Hello, world 1,000',commaRuns=ctx.typesetRuns(commaText);assert.equal(commaRuns.map(r=>r.text).join(''),commaText);
+assert.equal(commaRuns.find(r=>r.text===',').kind,'upright-punct');assert.equal(commaRuns.find(r=>r.text==='Hello, world').kind,'latin-words');
+const commaNode=node();ctx.appendTypeset(commaNode,'はい,そう');assert.equal(commaNode.textContent,'はい，そう');
+console.log('A half-width comma in Japanese text uses the vertical full-width comma; inside an English phrase it stays sideways.');
