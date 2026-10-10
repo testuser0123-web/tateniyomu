@@ -122,3 +122,20 @@ console.log('Home has its own theme setting behind a gear button, independent of
 assert.match(html,/<button id="shelf-new" class="primary">＋ 新規<\/button>/);assert.doesNotMatch(html,/＋ 本をつくる/);
 assert.match(html,/\.shelf-header\{padding:14px 16px;flex-wrap:nowrap;gap:10px\}\.shelf-brand\{white-space:nowrap;flex:none\}/);
 console.log('The library header keeps the logo and buttons on one row on phones.');
+
+const bangText='Love it! 本当?! 嘘!!! え?',bangRuns=ctx.typesetRuns(bangText);assert.equal(bangRuns.map(r=>r.text).join(''),bangText);
+assert.equal(bangRuns.find(r=>r.text==='Love it').kind,'latin-words');assert.equal(bangRuns.find(r=>r.text==='!').kind,'upright-punct');
+assert.equal(bangRuns.find(r=>r.text==='?!').kind,'tcy');assert.equal(bangRuns.find(r=>r.text==='!!!').kind,'upright-punct');assert.equal(bangRuns.find(r=>r.text==='?').kind,'upright-punct');
+assert.ok(!ctx.boundaries('本当?!').includes(3));
+const bangNode=node();ctx.appendTypeset(bangNode,'え!?お?');assert.equal(bangNode.textContent,'え!?お？');assert.ok(bangNode.children.some(c=>c.className==='tcy'&&c.textContent==='!?'));
+console.log('Half-width ! and ? stand upright; pairs such as !? are set tate-chu-yoko.');
+
+const commaText='はい,そうです。Hello, world 1,000',commaRuns=ctx.typesetRuns(commaText);assert.equal(commaRuns.map(r=>r.text).join(''),commaText);
+assert.equal(commaRuns.find(r=>r.text===',').kind,'upright-punct');assert.equal(commaRuns.find(r=>r.text==='Hello, world').kind,'latin-words');
+const commaNode=node();ctx.appendTypeset(commaNode,'はい,そう');assert.equal(commaNode.textContent,'はい，そう');
+console.log('A half-width comma in Japanese text uses the vertical full-width comma; inside an English phrase it stays sideways.');
+
+const dotText='はい.そうです... Mr. Smith',dotRuns=ctx.typesetRuns(dotText);assert.equal(dotRuns.map(r=>r.text).join(''),dotText);
+assert.equal(dotRuns.find(r=>r.text==='.').kind,'upright-punct');assert.equal(dotRuns.find(r=>r.text==='...').kind,'vertical-symbol');assert.equal(dotRuns.find(r=>r.text==='Mr. Smith').kind,'latin-words');
+const dotNode=node();ctx.appendTypeset(dotNode,'はい.そう');assert.equal(dotNode.textContent,'はい．そう');
+console.log('A half-width period in Japanese text uses the vertical full-width period; ... and English phrases are unchanged.');
