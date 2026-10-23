@@ -145,3 +145,18 @@ for(const c of [':',';','-'])assert.equal(colonRuns.find(r=>r.text===c).kind,'up
 assert.equal(colonRuns.find(r=>r.text==='--').kind,'vertical-rule');assert.equal(colonRuns.find(r=>r.text==='Note: e-mail, well-known').kind,'latin-words');
 const colonNode=node();ctx.appendTypeset(colonNode,'時:分;秒-終');assert.equal(colonNode.textContent,'時：分；秒‐終');
 console.log('Half-width colon, semicolon and hyphen in Japanese text use vertical full-width forms; English phrases stay sideways.');
+
+const quoteText='自分の"先輩"に“後輩”と＂友人＂。He said "yes" and left. 片"方\n"改行',quoteRuns=ctx.typesetRuns(quoteText);assert.equal(quoteRuns.map(r=>r.text).join(''),quoteText);
+assert.equal(quoteRuns.filter(r=>r.kind==='jp-quote').map(r=>r.display).join(''),'〝〟〝〟〝〟','Quotes around Japanese pair up; English-only and line-crossing quotes are left alone.');
+const quoteNode=node();ctx.appendTypeset(quoteNode,'の"先輩"に',0,[{start:1,end:3}]);assert.equal(quoteNode.textContent,'の〝先輩〟に');assert.equal(marked(quoteNode),'〝先');
+const pageSlice=quoteText.slice(5,12),sliceNode=node();ctx.appendTypeset(sliceNode,pageSlice,5,[],quoteText);assert.equal(sliceNode.textContent,'輩〟に〝後輩〟','Pairing uses the whole text, so a page that starts inside quotes still closes them.');
+assert.equal(ctx.typesetRuns('￢⊥"横"￢⊥').filter(r=>r.kind==='jp-quote').length,0);
+assert.equal(ctx.displaySource(quoteText).length,quoteText.length);
+console.log('Paired double quotes around Japanese use vertical 〝〟 without changing offsets.');
+
+const voicedText='『え゛？』あ゜ン゙ー゛っ゛',voicedRuns=ctx.typesetRuns(voicedText);assert.equal(voicedRuns.map(r=>r.text).join(''),voicedText);
+assert.equal(voicedRuns.filter(r=>r.voiced).map(r=>r.text+':'+r.kind).join('|'),'え゛:tcy|あ゜:tcy|ン\u3099:tcy');
+assert.ok(!voicedRuns.some(r=>r.kind==='vertical-symbol'),'A combining mark is never boxed as a symbol.');
+const voicedNode=node();ctx.appendTypeset(voicedNode,'え゛？あ゜');assert.equal(voicedNode.textContent,'え゙？あ゚');
+assert.ok(!ctx.boundaries('『え゛？').includes(2),'A page never separates the mark from its kana.');
+console.log('A kana followed by a voiced/semi-voiced mark is drawn as one upright cell with the mark at its top right.');
