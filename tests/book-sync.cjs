@@ -51,4 +51,11 @@ assert.deepEqual(plain(ctx.mergeBooks({...legacy(base),versions:ctx.cleanVersion
 // Bulk export keeps each book's id.
 const bulk=ctx.validateBundle(plain(ctx.makeBulkExportData([base,{...base,id:'book-2'}],{},{})));assert.deepEqual(bulk.map(x=>x.book.id),['book-1','book-2']);
 assert.ok(html.includes('id="import-conflict-dialog"'));
+// The contents and title page switches travel with the book: each is a revision of its group, and a fast-forward brings it over.
+const pages={...base,toc:true,titlePage:true};
+const flags=roundTrip(pages);assert.equal(flags.toc,true);assert.equal(flags.titlePage,true);
+assert.equal(roundTrip(base).toc,undefined);assert.equal(roundTrip(base).titlePage,undefined);
+const switched=ctx.stampVersions(base,pages);assert.equal(switched.versions.text.length,2);assert.equal(switched.versions.meta.length,2);
+r=ctx.mergeBooks(base,roundTrip(switched));assert.equal(r.book.toc,true);assert.equal(r.book.titlePage,true);
+r=ctx.mergeBooks(switched,roundTrip(ctx.stampVersions(switched,{...switched,toc:undefined,titlePage:undefined})));assert.equal('toc' in r.book,false);assert.equal('titlePage' in r.book,false);
 console.log('Books keep their ids across export/import; edits fast-forward, notes merge, and real conflicts are reported.');
