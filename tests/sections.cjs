@@ -49,6 +49,13 @@ const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).f
   assert.equal(context.getMarkupRanges('**前§§題§§後**').decorations.length,0);
   assert.equal(context.getMarkupRanges('$!img(a)§§題§§').filter(r=>r.type==='image').length,1);
 
+  // <br> breaks a title into lines; it only counts inside a title and is never split from itself.
+  const broken='§§第二章<br>海辺の<BR/>町§§\n本文<br>';
+  same(context.typesetRuns(broken,0,broken).filter(r=>r.kind==='title-break').map(r=>r.text),['<br>','<BR/>']);
+  assert.equal(context.typesetRuns('本文<br>',0,'本文<br>').some(r=>r.kind==='title-break'),false);
+  assert.ok(!context.boundaries(broken).some(i=>i>broken.indexOf('<br>')&&i<broken.indexOf('<br>')+4));
+  same(shape(await layout(broken)),['S','T']);
+
   // Illustrations around a title keep their places.
   same(shape(await layout('前\n$!img(a)\n§§二§§\n後')),['T','[a]','S','T']);
 
