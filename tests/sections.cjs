@@ -9,7 +9,7 @@ context.illustrationNames=new Set(['a']);
 // Mirrors paginate(): pages end at both sides of each section, then illustrations and the contents are placed.
 async function layout(text,toc=false){const ranges=context.getMarkupRanges(text),images=ranges.filter(r=>r.type==='image');const pages=await context.splitPages(text,100,100,18,1,[...images.filter(r=>r.strict).map(r=>r.start),...ranges.sections.flatMap(s=>[s.start,s.end]),...ranges.pageBreaks.map(b=>b.start)]);const placed=context.placeIllustrations(text,context.placeSections(text,pages,ranges.sections,ranges.pageBreaks),images);return toc?context.addContents(text,placed,ranges.sections,100,100):placed;}
 const same=(a,b)=>assert.equal(JSON.stringify(a),JSON.stringify(b));
-const shape=pages=>pages.map(p=>p.contents?'C':p.image?'['+p.image+']':p.section?'S':'T');
+const shape=pages=>pages.map(p=>p.title?'P':p.contents?'C':p.image?'['+p.image+']':p.section?'S':'T');
 const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).filter(r=>r.kind!=='writing-marker').map(r=>r.text).join('');
 (async()=>{
   // The markers and the blank lines after the title are hidden; the title itself is shown.
@@ -100,6 +100,14 @@ const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).f
   same(pages[0].contents.map(x=>[book.slice(x.start,x.end),x.page]),[['一',2],['二',4]]);
   assert.ok(pages[0].first);
   context.pages=pages;assert.equal(context.findPage(0),1,'reading positions never land on the contents');
+  // A title page comes first, the contents after it, and the page numbers count it.
+  const titled=[{title:true,start:0,end:0},...(await layout(book))];
+  pages=context.addContents(book,titled,context.getMarkupRanges(book).sections,100,100);
+  same(shape(pages),['P','C','T','S','T','S','T']);
+  same(pages[1].contents.map(x=>x.page),[3,5]);
+  for(const x of pages[1].contents)assert.ok(pages[x.page].section);
+  same(pages.map(context.frontPage),[true,true,false,false,false,false,false]);
+  context.pages=pages;assert.equal(context.findPage(0),2);
   const many=Array.from({length:12},(_,i)=>'§§第'+i+'章のとても長い見出し§§\n本文').join('\n');
   pages=await layout(many,true);
   const contents=pages.filter(p=>p.contents);
