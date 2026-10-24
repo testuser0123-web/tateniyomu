@@ -56,6 +56,13 @@ const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).f
   assert.ok(!context.boundaries(broken).some(i=>i>broken.indexOf('<br>')&&i<broken.indexOf('<br>')+4));
   same(shape(await layout(broken)),['S','T']);
 
+  // ^ at the start of a title line moves that line to the top and is hidden; elsewhere it is ordinary text.
+  const aligned='§§^第二章<br>海^辺<br>^町§§\n^本文';
+  same(context.typesetRuns(aligned,0,aligned).filter(r=>r.kind!=='writing-marker'&&r.kind!=='title-break').map(r=>r.text).join(''),'第二章海^辺町^本文');
+  const titlePage={start:0,end:aligned.indexOf('^本文'),section:true};
+  same(context.sectionLines(aligned,titlePage).map(l=>[aligned.slice(l.start,l.end),l.top]),[['§§^第二章',true],['<br>海^辺',false],['<br>^町§§\n',true]]);
+  same(context.sectionLines('§§一§§',{start:0,end:6}).map(l=>l.top),[false]);
+
   // Illustrations around a title keep their places.
   same(shape(await layout('前\n$!img(a)\n§§二§§\n後')),['T','[a]','S','T']);
 
