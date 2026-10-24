@@ -108,6 +108,10 @@ const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).f
   for(const x of pages[1].contents)assert.ok(pages[x.page].section);
   same(pages.map(context.frontPage),[true,true,false,false,false,false,false]);
   context.pages=pages;assert.equal(context.findPage(0),2);
+  // The title page splits a lead-in at the last full-width space; half-width spaces and edge spaces do not split.
+  same(context.splitTitle('蓮ノ空女学院スクールアイドルクラブ１０１期活動記録　叶えた夢のそのムコウに'),{lead:'蓮ノ空女学院スクールアイドルクラブ１０１期活動記録',main:'叶えた夢のそのムコウに'});
+  same(context.splitTitle('シリーズ　第二巻　海辺の町'),{lead:'シリーズ　第二巻',main:'海辺の町'});
+  for(const t of ['雨あがりの栞','Hello World','　前に空白','後ろに空白　'])same(context.splitTitle(t),{lead:'',main:t.trim()});
   const many=Array.from({length:12},(_,i)=>'§§第'+i+'章のとても長い見出し§§\n本文').join('\n');
   pages=await layout(many,true);
   const contents=pages.filter(p=>p.contents);
