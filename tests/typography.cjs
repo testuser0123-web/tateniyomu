@@ -160,3 +160,12 @@ assert.ok(!voicedRuns.some(r=>r.kind==='vertical-symbol'),'A combining mark is n
 const voicedNode=node();ctx.appendTypeset(voicedNode,'え゛？あ゜');assert.equal(voicedNode.textContent,'え゙？あ゚');
 assert.ok(!ctx.boundaries('『え゛？').includes(2),'A page never separates the mark from its kana.');
 console.log('A kana followed by a voiced/semi-voiced mark is drawn as one upright cell with the mark at its top right.');
+{
+  // A blank line is its own narrower block; the newline that ends a line of text stays inline and offsets are unchanged.
+  const text='あ\n\n\nい\nう';const runs=ctx.typesetRuns(text);
+  assert.equal(runs.map(r=>r.text).join(''),text);
+  assert.equal(JSON.stringify(runs.filter(r=>r.text==='\n').map(r=>[r.start,r.kind])),JSON.stringify([[1,''],[2,'blank-line'],[3,'blank-line']]));
+  assert.ok(runs.some(r=>!r.kind&&r.start<=5&&r.start+r.text.length>5),'a single newline is plain text');
+  assert.match(fs.readFileSync(__dirname+'/../dist/index.html','utf8'),/\.page-text \.blank-line\{display:block;line-height:1\.45\}/);
+}
+console.log('Blank lines are set narrower than lines of text without changing offsets.');
