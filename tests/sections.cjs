@@ -7,7 +7,7 @@ vm.runInContext(script.slice(script.indexOf('function sidewaysRanges'),script.in
 vm.runInContext(script.slice(script.indexOf('function placeIllustrations'),script.indexOf('function fillPage')),context);
 context.illustrationNames=new Set(['a']);
 // Mirrors paginate(): pages end at both sides of each section, then illustrations and the contents are placed.
-async function layout(text,toc=false){const ranges=context.getMarkupRanges(text),images=ranges.filter(r=>r.type==='image');const pages=await context.splitPages(text,100,100,18,1,[...images.filter(r=>r.strict).map(r=>r.start),...ranges.sections.flatMap(s=>[s.start,s.end])]);const placed=context.placeIllustrations(text,context.placeSections(text,pages,ranges.sections),images);return toc?context.addContents(text,placed,ranges.sections,100,100):placed;}
+async function layout(text,toc=false){const ranges=context.getMarkupRanges(text),images=ranges.filter(r=>r.type==='image');const pages=await context.splitPages(text,100,100,18,1,[...images.filter(r=>r.strict).map(r=>r.start),...ranges.sections.flatMap(s=>[s.start,s.end]),...ranges.pageBreaks.map(b=>b.start)]);const placed=context.placeIllustrations(text,context.placeSections(text,pages,ranges.sections,ranges.pageBreaks),images);return toc?context.addContents(text,placed,ranges.sections,100,100):placed;}
 const same=(a,b)=>assert.equal(JSON.stringify(a),JSON.stringify(b));
 const shape=pages=>pages.map(p=>p.contents?'C':p.image?'['+p.image+']':p.section?'S':'T');
 const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).filter(r=>r.kind!=='writing-marker').map(r=>r.text).join('');
@@ -62,6 +62,33 @@ const shown=(text,from,to)=>context.typesetRuns(text.slice(from,to),from,text).f
   const titlePage={start:0,end:aligned.indexOf('^本文'),section:true};
   same(context.sectionLines(aligned,titlePage).map(l=>[aligned.slice(l.start,l.end),l.top]),[['§§^第二章',true],['<br>海^辺',false],['<br>^町§§\n',true]]);
   same(context.sectionLines('§§一§§',{start:0,end:6}).map(l=>l.top),[false]);
+
+  // §§§§ ends the page; it is hidden with the whitespace after it, and is never an empty title.
+  const forced='前の文。\n§§§§\n\n次の文。';
+  same(context.getMarkupRanges(forced).sections,[]);
+  assert.equal(shown(forced,0,forced.length),'前の文。\n次の文。');
+  pages=await layout(forced);
+  same(shape(pages),['T','T']);
+  assert.equal(pages[0].end,forced.indexOf('§'));
+  assert.equal(pages.map(p=>forced.slice(p.start,p.end)).join(''),forced);
+  // Only blank lines are hidden: the indent of the next paragraph stays, and trailing whitespace at the end goes with the marker.
+  for(const marker of ['§§二§§','§§§§']){
+    const indented=marker+'\n　\n\n　次の段落。',[r]=[...context.sectionRanges(indented),...context.pageBreakRanges(indented)];
+    assert.equal(indented.slice(r.end),'　次の段落。');
+    const tail=marker+'\n　 \n';
+    assert.equal([...context.sectionRanges(tail),...context.pageBreakRanges(tail)][0].end,tail.length);
+  }
+  // Only exactly four count; § runs of other lengths stay as written.
+  same(context.pageBreakRanges('a§§§b§§§§§c').length,0);
+  // No blank pages: a break at the end, before a title, after a title, or twice in a row.
+  same(shape(await layout('本文\n§§§§\n')),['T']);
+  same(shape(await layout('本文\n§§§§\n§§二§§\n後')),['T','S','T']);
+  same(shape(await layout('§§一§§\n§§§§\n本文')),['S','T']);
+  same(shape(await layout('前\n§§§§\n§§§§\n後')),['T','T']);
+  same(shape(await layout('§§§§\n本文')),['T']);
+  pages=await layout('前\n§§§§\n§§二§§\n後',true);
+  same(shape(pages),['C','T','S','T']);
+  assert.equal(pages[0].contents[0].page,2);
 
   // Illustrations around a title keep their places.
   same(shape(await layout('前\n$!img(a)\n§§二§§\n後')),['T','[a]','S','T']);
