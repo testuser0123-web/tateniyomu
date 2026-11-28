@@ -59,3 +59,27 @@ const switched=ctx.stampVersions(base,pages);assert.equal(switched.versions.text
 r=ctx.mergeBooks(base,roundTrip(switched));assert.equal(r.book.toc,true);assert.equal(r.book.titlePage,true);
 r=ctx.mergeBooks(switched,roundTrip(ctx.stampVersions(switched,{...switched,toc:undefined,titlePage:undefined})));assert.equal('toc' in r.book,false);assert.equal('titlePage' in r.book,false);
 console.log('Books keep their ids across export/import; edits fast-forward, notes merge, and real conflicts are reported.');
+
+const frontMarks=[{front:'title',offset:0},{front:'contents',offset:2},{offset:0},{offset:2}];
+const annotated={...pages,bookmarks:frontMarks};
+assert.deepEqual(plain(roundTrip(annotated).bookmarks),frontMarks);
+const merged=plain(ctx.mergeBooks(annotated,roundTrip(annotated)).book.bookmarks);
+assert.deepEqual(merged,[frontMarks[0],frontMarks[2],frontMarks[1],frontMarks[3]]);
+assert.deepEqual(plain(ctx.carryNotes(base.text,'前'+base.text,annotated).bookmarks),[
+  {front:'title',offset:0},{front:'contents',offset:3},{offset:1},{offset:3}
+]);
+
+// Comments belong to the annotation and survive export, source edits, and sync.
+const commented={...annotated,bookmarks:[{front:'title',offset:0,comment:'表紙の感想',commentAt:200}],
+  highlights:[{start:2,end:4,comment:'一行目\n二行目',commentAt:220}]};
+const restored=roundTrip(commented);
+assert.deepEqual(plain(restored.bookmarks),commented.bookmarks);
+assert.deepEqual(plain(restored.highlights),commented.highlights);
+const shifted=ctx.carryNotes(base.text,'前'+base.text,restored);
+assert.deepEqual(plain(shifted.highlights),[{...commented.highlights[0],start:3,end:5}]);
+const cleared={...commented,bookmarks:[{front:'title',offset:0,commentAt:300}]};
+for(const pair of [[cleared,commented],[commented,cleared]]){
+  assert.deepEqual(plain(ctx.mergeBooks(...pair).book.bookmarks),cleared.bookmarks);
+}
+assert.deepEqual(plain(ctx.mergeBooks(commented,{...commented,highlights:[{start:2,end:4}]}).book.highlights),commented.highlights);
+assert.throws(()=>roundTrip({...commented,highlights:[{start:1,end:2,comment:{}}]}));

@@ -14,3 +14,24 @@ for(const capacity of [12,25,70]){
  assert.equal(text,book.text);assert.equal(highlight,book.text.slice(8,48));assert.equal(JSON.stringify(book),original);
 }
 console.log('Annotations retain text offsets across 3 pagination sizes; cross-page highlights preserve the exact selected text.');
+
+// Front matter and the first body page have the same page start.
+const front=(contents)=>({start:0,end:0,contents:contents.map(start=>({start,end:start+1}))});
+context.pages=[{start:0,end:0,title:true},front([2]),front([40]),{start:0,end:70}];
+book.bookmarks=[];
+Object.assign(context,{toast(){},render(){},persist(){}});
+vm.runInContext(script.slice(script.indexOf('function toggleBookmark'),script.indexOf("$('bookmark').onclick")),context);
+for(const i of [0,1,2,3]){
+  assert.equal(context.pageBookmarked(i),false);
+  context.toggleBookmark(i);
+  assert.equal(context.pageBookmarked(i),true);
+}
+book.bookmarks=JSON.parse(JSON.stringify(book.bookmarks));
+assert.deepEqual(book.bookmarks.map(b=>context.notePage(b)),[0,1,2,3]);
+context.toggleBookmark(1);
+assert.deepEqual(book.bookmarks.map(b=>context.notePage(b)),[0,2,3]);
+// After reflow the bookmarked heading is on a different contents page.
+context.pages.splice(1,2,front([2,40]));
+assert.deepEqual(book.bookmarks.map(b=>context.notePage(b)),[0,1,2]);
+context.toggleBookmark(1);
+assert.deepEqual(book.bookmarks.map(b=>context.notePage(b)),[0,2]);
